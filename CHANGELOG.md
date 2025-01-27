@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-
 ### Changed
 - Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
 `write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
 for implementing asymmetric bidirectional flows. (#789)
+### Changed
+- Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv` (#814).
+- Created link in the thermal doc page to fuels page for piecewise linear cost curve documentation (#820).
+- Doc rendering fix in fuel.jl (#821).
 
 ### Added
 - New resource type: Allam Cycle with Oxygen Storage (#772).
@@ -30,11 +33,6 @@ Models running with, non-default, solvers Cbc and Clp will fail unless
 - Fix path manipulation crash on Windows with TDR & reconstruction (#827).
 
 ## [0.4.3] - 2025-01-29
-
-### Changed
-- Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv` (#814).
-- Created link in the thermal doc page to fuels page for piecewise linear cost curve documentation (#820).
-- Doc rendering fix in fuel.jl (#821).
 
 ### Fixed
 - Fixed capacity reserve margin formulation for asymmetric storage
