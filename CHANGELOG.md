@@ -7,10 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+
 ### Changed
 - Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
 `write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
 for implementing asymmetric bidirectional flows. (#789)
+
+### Added
+- New resource type: Allam Cycle with Oxygen Storage (#772).
+- Caching of `derating_factor` to improve performance in model generation (#834).
+- Default option, `"EnableJuMPDirectMode"`, to build the model more efficiently.
+Models running with, non-default, solvers Cbc and Clp will fail unless
+`"EnableJuMPDirectMode"` is set to false (#835).
+- Improve `@expressions` performance by pre-processing sets (#815).
+
+## [0.4.4] - 2025-02-04
+
+### Added
+- Add Windows OS to GitHub Actions test matrix.
+
+### Fixed
+- Fix path manipulation crash on Windows with TDR & reconstruction (#827).
+
+## [0.4.3] - 2025-01-29
+
+### Changed
+- Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv` (#814).
+- Created link in the thermal doc page to fuels page for piecewise linear cost curve documentation (#820).
+- Doc rendering fix in fuel.jl (#821).
+
+### Fixed
+- Fixed capacity reserve margin formulation for asymmetric storage
+when OperationalReserves is on. (#818)
 
 ## [0.4.2] - 2024-12-23
 
