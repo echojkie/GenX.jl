@@ -52,6 +52,12 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # MW = (kV)^2/Ohms 
         inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
                                      scale_factor
+
+        # DC-OPF transmission capacity (in MW) expansion data:
+        inputs_nw["pMax_quantized_Line_Reinforcement"] = to_floats(:pMax_quantized_MW) /
+                                                         scale_factor # convert to GW
+        inputs_nw["Max_Trans_Cap"] = floor(Array{Int64}, (to_floats(:Line_Max_Reinforcement_MW)./
+                                           to_floats(:pMax_quantized_MW))) # Maximum number of quantized reinforcements allowed
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation

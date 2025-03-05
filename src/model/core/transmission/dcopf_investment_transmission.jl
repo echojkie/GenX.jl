@@ -108,7 +108,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
         @constraint(EP,
             cMaxLineReinforcement[l in EXPANSION_LINES],
-            vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
+            vNEW_TRANS_CAP_MULTIPLIER[l]<=inputs["Max_Trans_Cap"][l])
     end
     #END network expansion contraints
 
