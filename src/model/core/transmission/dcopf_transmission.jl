@@ -50,13 +50,13 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     #Power Flow in the candidate expansion lines
     @constraint(EP,
-        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T],
-        EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM*(1-vNEW_TRANS_CAP_MULTIPLIER[l]))
+        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
+        EP[:vFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM*(i-vNEW_TRANS_CAP_MULTIPLIER[l]))
     @constraint(EP,
-        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T],
-        EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM*(1-vNEW_TRANS_CAP_MULTIPLIER[l]))
+        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
+        EP[:vFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM*(i-vNEW_TRANS_CAP_MULTIPLIER[l]))
 
     # Bus angle limits (except slack bus)
     @constraints(EP,
