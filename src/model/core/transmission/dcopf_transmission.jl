@@ -29,6 +29,11 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
 
+    if NetworkExpansion == 1
+        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
+        EXPANSION_LINES = inputs["EXPANSION_LINES"]
+    end
+
     ### DC-OPF variables ###
 
     # Voltage angle variables of each zone "z" at hour "t" 
@@ -42,6 +47,16 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         EP[:vFLOW][l,
             t]==inputs["pDC_OPF_coeff"][l] *
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
+
+    #Power Flow in the candidate expansion lines
+    @constraint(EP,
+        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T],
+        EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM*(1-vNEW_TRANS_CAP_MULTIPLIER[l]))
+    @constraint(EP,
+        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T],
+        EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM*(1-vNEW_TRANS_CAP_MULTIPLIER[l]))
 
     # Bus angle limits (except slack bus)
     @constraints(EP,
