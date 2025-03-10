@@ -27,6 +27,15 @@ function load_inputs(setup::Dict, path::AbstractString)
         inputs["L"] = 0
     end
 
+    if setup["DC_OPF"] == 1
+        if isfile(joinpath(system_path, "Candidate_line.csv"))
+            network_var_candidate_line = load_network_data!(setup, system_path, inputs)
+        else
+            inputs["Z"] = 1
+            inputs["L"] = 0
+        end
+    end
+
     # Read temporal-resolved load data, and clustering information if relevant
     load_demand_data!(setup, path, inputs)
     # Read fuel cost data, including time-varying fuel costs
@@ -42,6 +51,9 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_cap_reserve_margin!(setup, policies_path, inputs)
         if inputs["Z"] > 1
             load_cap_reserve_margin_trans!(setup, inputs, network_var)
+            if setup["DC_OPF"] == 1
+                load_cap_reserve_margin_trans!(setup, inputs, network_var_candidate_line)
+            end
         end
     end
 
