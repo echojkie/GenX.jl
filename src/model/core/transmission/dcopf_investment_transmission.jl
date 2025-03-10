@@ -45,7 +45,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
-        @variable(EP, vNEW_TRANS_CAP_MULTIPLIER[l in EXPANSION_LINES] in Int, lower_bound=0)
+        @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in EXPANSION_LINES] in Int, lower_bound=0)
     end
 
     ### Expressions ###
@@ -61,7 +61,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP, eAvail_Trans_Cap[l = 1:L],
             if l in EXPANSION_LINES
-                eTransMax[l] + vNEW_TRANS_CAP_MULTIPLIER[l]*inputs["Line_Reinforcement_Cap_Size"][l]
+                eTransMax[l] + vNEW_TRANS_CAP_DECISION_INT[l]*inputs["Line_Reinforcement_Cap_Size"][l]
             else
                 eTransMax[l]
             end)
@@ -74,7 +74,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP,
             eTotalCNetworkExp,
-            sum(vNEW_TRANS_CAP_MULTIPLIER[l] * inputs["Line_Reinforcement_Cap_Size"][l] * inputs["pC_Line_Reinforcement"][l]
+            sum(vNEW_TRANS_CAP_DECISION_INT[l] * inputs["Line_Reinforcement_Cap_Size"][l] * inputs["pC_Line_Reinforcement"][l]
             for l in EXPANSION_LINES))
 
         if MultiStage == 1
@@ -108,7 +108,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
         @constraint(EP,
             cMaxLineReinforcement[l in EXPANSION_LINES],
-            vNEW_TRANS_CAP_MULTIPLIER[l]<=inputs["Max_Trans_Cap"][l])
+            vNEW_TRANS_CAP_DECISION_INT[l]<=inputs["Max_Trans_Cap"][l])
     end
     #END network expansion contraints
 
