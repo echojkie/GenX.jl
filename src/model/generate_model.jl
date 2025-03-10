@@ -144,6 +144,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if Z > 1 && setup["DC_OPF"] != 0
+        dcopf_investment_transmission!(EP, inputs, setup)
         dcopf_transmission!(EP, inputs, setup)
     end
 

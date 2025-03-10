@@ -7,9 +7,16 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     filename = "Network.csv"
+    filename_candidate_line = AbstractString
+    network_var_candidate_line = DataFrame()
     network_var = load_dataframe(joinpath(path, filename))
+    if setup["NetworkExpansion"] == 1 && setup["DC_OPF"] == 1
+        filename_candidate_line = "Candidate_line.csv"
+        network_var_candidate_line = load_dataframe(joinpath(path, filename_candidate_line))
+    end
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
+    as_vector_(col::Symbol) = collect(skipmissing(network_var_candidate_line[!, col]))
     to_floats(col::Symbol) = convert(Array{Float64}, as_vector(col))
 
     # Number of zones in the network
@@ -54,7 +61,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
                                      scale_factor
 
         # DC-OPF transmission capacity (in MW) expansion data:
-        inputs_nw["pMax_quantized_Line_Reinforcement"] = to_floats(:pMax_quantized_MW) /
+        inputs_nw["Line_Reinforcement_Cap_Size"] = to_floats(:pMax_quantized_MW) /
                                                          scale_factor # convert to GW
         inputs_nw["Max_Trans_Cap"] = floor(Array{Int64}, (to_floats(:Line_Max_Reinforcement_MW)./
                                            to_floats(:pMax_quantized_MW))) # Maximum number of quantized reinforcements allowed
