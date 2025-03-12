@@ -138,7 +138,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         operational_reserves!(EP, inputs, setup)
     end
 
-    if Z > 1
+    if Z > 1 && setup["DC_OPF"] == 0
         investment_transmission!(EP, inputs, setup)
         transmission!(EP, inputs, setup)
     end

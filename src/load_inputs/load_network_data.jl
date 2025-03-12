@@ -3,34 +3,41 @@
 
 Function for reading input parameters related to the electricity transmission network
 """
-function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
+function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, filename::AbstractString, candidate_flag::Bool)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-
-    filename = "Network.csv"
-    filename_candidate_line = AbstractString
-    network_var_candidate_line = DataFrame()
     network_var = load_dataframe(joinpath(path, filename))
-    if setup["NetworkExpansion"] == 1 && setup["DC_OPF"] == 1
-        filename_candidate_line = "Candidate_line.csv"
-        network_var_candidate_line = load_dataframe(joinpath(path, filename_candidate_line))
-    end
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
-    as_vector_(col::Symbol) = collect(skipmissing(network_var_candidate_line[!, col]))
     to_floats(col::Symbol) = convert(Array{Float64}, as_vector(col))
 
+
     # Number of zones in the network
-    Z = length(as_vector(:Network_zones))
-    inputs_nw["Z"] = Z
-    # Number of lines in the network
-    L = length(as_vector(:Network_Lines))
-    inputs_nw["L"] = L
+    if !candidate_flag
+        Z = length(as_vector(:Network_zones))
+        inputs_nw["Z"] = Z
+        # Number of lines in the network
+        L = length(as_vector(:Network_Lines))
+        inputs_nw["L"] = L
+    else
+        Z = length(as_vector(:Network_zones))
+        inputs_nw["Z_cand"] = Z
+        # Number of lines in the network
+        L = length(as_vector(:Network_Lines))
+        inputs_nw["L_cand"] = L
+    end
 
     # Topology of the network source-sink matrix
-    inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
+    if !candidate_flag
+        inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
+    else
+        inputs_nw["pNet_Map_cand"] = load_network_map(network_var, Z, L)
+    end
 
     # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    inputs_nw["pTrans_Max"] = zeros(Float64, L)
+    if !candidate_flag
+        inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    end
 
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
@@ -59,12 +66,17 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # MW = (kV)^2/Ohms 
         inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
                                      scale_factor
-
-        # DC-OPF transmission capacity (in MW) expansion data:
-        inputs_nw["Line_Reinforcement_Cap_Size"] = to_floats(:pMax_quantized_MW) /
-                                                         scale_factor # convert to GW
-        inputs_nw["Max_Trans_Cap"] = floor(Array{Int64}, (to_floats(:Line_Max_Reinforcement_MW)./
-                                           to_floats(:pMax_quantized_MW))) # Maximum number of quantized reinforcements allowed
+        if candidate_flag
+            # Transmission line candidate expansion capacity (in MW)
+            # DC-OPF transmission capacity (in MW) expansion data:
+            inputs_nw["Line_Reinforcement_Cap_Size"] = to_floats(:pMax_quantized_MW) /
+                                                                                    scale_factor # convert to GW
+            inputs_nw["Max_Trans_Cap"] = calculate_integer_quotients(network_var)
+            
+            #floor(Array{Int64}, (to_floats(:Line_Max_Reinforcement_MW)./
+                                                            #to_floats(:pMax_quantized_MW))) # Maximum number of quantized reinforcements allowed
+        end
+        
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
@@ -117,6 +129,16 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     println(filename * " Successfully Read!")
 
     return network_var
+end
+
+function calculate_integer_quotients(df::DataFrame)
+    quotients = Int[] # Initialize an empty vector of Ints
+    for row in eachrow(df)
+        quotient = row.Line_Max_Reinforcement_MW / row.pMax_quantized_MW
+        integer_quotient = floor(Int, quotient) # Approximate to nearest integer <= quotient
+        push!(quotients, integer_quotient)
+    end
+    return quotients
 end
 
 @doc raw"""

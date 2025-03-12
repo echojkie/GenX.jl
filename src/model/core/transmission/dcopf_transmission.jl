@@ -23,11 +23,13 @@ Finally, we enforce the reference voltage phase angle constraint (for the slack 
 
 """
 function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
-    println("DC-OPF Module")
+    println("DC-OPF Transmission Flows Module")
 
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
+    NetworkExpansion = setup["NetworkExpansion"]
+    BigM = 2.5.*inputs["pMax_Line_Reinforcement"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
@@ -52,11 +54,11 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP,
         cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
         EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM[l]*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
     @constraint(EP,
         cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
         EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM[l]*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
 
     # Bus angle limits (except slack bus)
     @constraints(EP,

@@ -26,7 +26,7 @@ The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is con
 ```
 """
 function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
-    println("Investment Transmission Module")
+    println("DC-OPF Based Investment Transmission Module")
 
     L = inputs["L"]     # Number of transmission lines
     NetworkExpansion = setup["NetworkExpansion"]
@@ -45,7 +45,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
-        @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in EXPANSION_LINES] in Int, lower_bound=0)
+        @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in EXPANSION_LINES], Int, lower_bound=0)
     end
 
     ### Expressions ###
