@@ -28,6 +28,8 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
+    L_cand = inputs["L_cand"]     # Number of candidate transmission lines
+    Z_cand = inputs["Z_cand"]     # Number of candidate zones
     NetworkExpansion = setup["NetworkExpansion"]
     BigM = 2.5.*inputs["pMax_Line_Reinforcement"]
 
@@ -37,6 +39,12 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ### DC-OPF variables ###
+
+    # Power flow on each existing transmission line "l" at hour "t"
+    @variable(EP, vFLOW[l = 1:L, t = 1:T])
+
+    # Power flow on each candidate transmission line "l" at hour "t"
+    @variable(EP, vCANDFLOW[l = 1:L_cand, t = 1:T])
 
     # Voltage angle variables of each zone "z" at hour "t" 
     @variable(EP, vANGLE[z = 1:Z, t = 1:T])
@@ -52,13 +60,13 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     #Power Flow in the candidate expansion lines
     @constraint(EP,
-        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
-        EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM[l]*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
+        cPOWER_FLOW_OPF_EXPANSION_FORWARD[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
+        EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff_cand"][l] *
+                sum(inputs["pNet_Map_cand"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM[l]*(i-EP[:vNEW_TRANS_CAP_DECISION_INT][l]))
     @constraint(EP,
-        cPOWER_FLOW_OPF_EXPANSION[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
-        EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff"][l] *
-                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM[l]*(i-vNEW_TRANS_CAP_DECISION_INT[l]))
+        cPOWER_FLOW_OPF_EXPANSION_REVERSE[l in EXPANSION_LINES, t = 1:T, i in 1:inputs["Max_Trans_Cap"][l]],
+        EP[:vCANDFLOW][l,t]-i*inputs["pDC_OPF_coeff_cand"][l] *
+                sum(inputs["pNet_Map_cand"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM[l]*(i-EP[:vNEW_TRANS_CAP_DECISION_INT][l]))
 
     # Bus angle limits (except slack bus)
     @constraints(EP,

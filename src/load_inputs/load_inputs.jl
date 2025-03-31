@@ -23,22 +23,13 @@ function load_inputs(setup::Dict, path::AbstractString)
     # Read input data about power network topology, operating and expansion attributes
     if isfile(joinpath(system_path, "Network.csv"))
         filename = "Network.csv"
-        network_var = load_network_data!(setup, system_path, inputs, filename, candidate_line_flag)
+        network_var, candidate_network_var = load_network_data!(setup, system_path, inputs, filename)
     else
         inputs["Z"] = 1
         inputs["L"] = 0
     end
 
-    if setup["DC_OPF"] == 1
-        if isfile(joinpath(system_path, "Candidate_line.csv"))
-            filename_candidate_line = "Candidate_line.csv"
-            candidate_line_flag = true
-            network_var_candidate_line = load_network_data!(setup, system_path, inputs, filename_candidate_line, candidate_line_flag)
-        else
-            inputs["Z"] = 1
-            inputs["L"] = 0
-        end
-    end
+
 
     # Read temporal-resolved load data, and clustering information if relevant
     load_demand_data!(setup, path, inputs)
@@ -56,7 +47,7 @@ function load_inputs(setup::Dict, path::AbstractString)
         if inputs["Z"] > 1
             load_cap_reserve_margin_trans!(setup, inputs, network_var)
             if setup["DC_OPF"] == 1
-                load_cap_reserve_margin_trans!(setup, inputs, network_var_candidate_line)
+                load_cap_reserve_margin_trans!(setup, inputs, candidate_network_var)
             end
         end
     end

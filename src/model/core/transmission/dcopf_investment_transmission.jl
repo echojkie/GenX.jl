@@ -29,6 +29,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("DC-OPF Based Investment Transmission Module")
 
     L = inputs["L"]     # Number of transmission lines
+    L_cand = inputs["L_cand"]     # Number of candidate transmission lines
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
 
@@ -36,6 +37,8 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
     end
+    println("Network Expansion Lines: ", EXPANSION_LINES) 
+    ### Check for valid inputs ###
 
     ### Variables ###
 
