@@ -79,6 +79,35 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             -inputs["Line_Angle_Limit"][l]
         end)
 
+    @constraints(EP,
+        begin
+            cMaxFlow_out_existing[l = 1:L, t = 1:T], EP[:vFLOW][l, t] <= EP[:eTransMax][l]
+            cMaxFlow_in_existing[l = 1:L, t = 1:T], EP[:vFLOW][l, t] >= -EP[:eTransMax][l]
+        end)
+
+    @constraints(EP,
+        begin
+            cMaxFlow_out_candidate[l in EXPANSION_LINES, t = 1:T], EP[:vCANDFLOW][l, t] <= EP[:vNEW_TRANS_CAP_DECISION_INT][l]*inputs["Line_Reinforcement_Cap_Size"][l]
+            cMaxFlow_in_candidate[l in EXPANSION_LINES, t = 1:T], EP[:vCANDFLOW][l, t] >= -EP[:vNEW_TRANS_CAP_DECISION_INT][l]*inputs["Line_Reinforcement_Cap_Size"][l]
+        end)
+
+    @expression(EP,
+        eNet_Export_Flows[z = 1:Z, t = 1:T],
+        sum(inputs["pNet_Map"][l, z] * EP[:vFLOW][l, t] for l in 1:L))
+
+    @expression(EP,
+        eNet_Export_Cand_Flows[z = 1:Z, t = 1:T],
+        sum(inputs["pNet_Map_cand"][l, z] * EP[:vCANDFLOW][l, t] for l in EXPANSION_LINES))
+
+    
+    @expression(EP, ePowerBalanceNetExportFlows[t = 1:T, z = 1:Z],
+        -eNet_Export_Flows[z, t])
+    @expression(EP, ePowerBalanceCandExportFlows[t = 1:T, z = 1:Z],
+        -eNet_Export_Cand_Flows[z, t])
+
+    add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceCandExportFlows)
+    add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
+
     # Slack Bus angle limit
     @constraint(EP, cANGLE_SLACK[t = 1:T], vANGLE[1, t]==0)
 end
