@@ -122,7 +122,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Infrastructure
     discharge!(EP, inputs, setup)
 
-    non_served_energy!(EP, inputs, setup)
+    #non_served_energy!(EP, inputs, setup)
 
     investment_discharge!(EP, inputs, setup)
 

@@ -271,6 +271,13 @@ function create_extended_max_flow_vector(network_df::DataFrame, candidate_df::Da
 
     # Calculate the number of additional rows
     additional_rows = nrow(candidate_df) - nrow(network_df)
+    println("Number of rows in candidate_df: ", nrow(candidate_df))
+    println("Number of rows in network_df: ", nrow(network_df))
+    println("Number of additional rows: ", additional_rows)
+    # Check if the number of additional rows is positive
+    if additional_rows < 0
+        error("The candidate DataFrame has fewer rows than the network DataFrame.")
+    end
 
     # Append 0.0 for the additional rows
     append!(max_flow_values, zeros(Float64, additional_rows))

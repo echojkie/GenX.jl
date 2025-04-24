@@ -31,7 +31,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     L_cand = inputs["L_cand"]     # Number of candidate transmission lines
     Z_cand = inputs["Z_cand"]     # Number of candidate zones
     NetworkExpansion = setup["NetworkExpansion"]
-    BigM = 2.5.*inputs["pMax_Line_Reinforcement"]
+    BigM = 5.0.*inputs["pMax_Line_Reinforcement"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs

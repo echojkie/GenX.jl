@@ -61,7 +61,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         optimize!(EP)
     end
 
-    if output_settings_d["WriteCosts"]
+    #=if output_settings_d["WriteCosts"]
         elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
         println("Time elapsed for writing costs is")
         println(elapsed_time_costs)
@@ -107,15 +107,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_nse = @elapsed write_nse(path, inputs, setup, EP)
         println("Time elapsed for writing nse is")
         println(elapsed_time_nse)
-    end
-
-    if output_settings_d["WritePowerBalance"]
-        elapsed_time_power_balance = @elapsed write_power_balance(path, inputs, setup, EP)
-        println("Time elapsed for writing power balance is")
-        println(elapsed_time_power_balance)
-    end
+    end=#
 
     if inputs["Z"] > 1
+        if setup["NetworkExpansion"] == 1 && output_settings_d["WriteNWExpansion"]
+            elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)
+            println("Time elapsed for writing network expansion is")
+            println(elapsed_time_expansion)
+        end
+        
         if output_settings_d["WriteTransmissionFlows"]
             elapsed_time_flows = @elapsed write_transmission_flows(path, inputs, setup, EP)
             println("Time elapsed for writing transmission flows is")
@@ -130,12 +130,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println("Time elapsed for writing transmission losses is")
             println(elapsed_time_losses)
         end
+    end
 
-        if setup["NetworkExpansion"] == 1 && output_settings_d["WriteNWExpansion"]
-            elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)
-            println("Time elapsed for writing network expansion is")
-            println(elapsed_time_expansion)
-        end
+    if output_settings_d["WritePowerBalance"]
+        elapsed_time_power_balance = @elapsed write_power_balance(path, inputs, setup, EP)
+        println("Time elapsed for writing power balance is")
+        println(elapsed_time_power_balance)
     end
 
     if output_settings_d["WriteEmissions"]
