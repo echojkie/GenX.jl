@@ -5,6 +5,8 @@ Function for reading input parameters related to the electricity transmission ne
 """
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, filename::AbstractString)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    println("Sacling setup: ", setup["ParameterScale"])
+    println("Scaling factor: ", scale_factor)
     network_var = load_dataframe(joinpath(path, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
@@ -50,7 +52,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, 
     if !candidate_flag
         inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
     else
-        inputs_nw["pTrans_Max"] = create_extended_max_flow_vector(network_var, candidate_network_var)
+        inputs_nw["pTrans_Max"] = create_extended_max_flow_vector(network_var, candidate_network_var) / scale_factor
     end
     
     # Loss of the existing lines in the network (in MW)
@@ -113,7 +115,10 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, 
         end
         
         println("DC-OPF values successfully read!")
-        println("DC-OPF Coefficients: ", inputs_nw["Max_Trans_Cap"])
+        println("DC-OPF Coefficients: ", inputs_nw["pDC_OPF_coeff"])
+        println("DC-OPF Coefficients (cand): ", inputs_nw["pDC_OPF_coeff_cand"])
+        println("Maximum Transmission Capacity: ", inputs_nw["pTrans_Max"])
+        println("Candidate Line Number Quantized: ", inputs_nw["Max_Trans_Cap"])
         
     end
 
@@ -132,6 +137,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, 
         # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
     end
+    println("Maximum possible flow after reinforcement (in GW): ", inputs_nw["pTrans_Max_Possible"])
 
     # Multi-Stage
     if setup["MultiStage"] == 1

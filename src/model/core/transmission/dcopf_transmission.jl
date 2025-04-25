@@ -25,13 +25,15 @@ Finally, we enforce the reference voltage phase angle constraint (for the slack 
 function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("DC-OPF Transmission Flows Module")
 
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
     L_cand = inputs["L_cand"]     # Number of candidate transmission lines
     Z_cand = inputs["Z_cand"]     # Number of candidate zones
     NetworkExpansion = setup["NetworkExpansion"]
-    BigM = 5.0.*inputs["pMax_Line_Reinforcement"]
+    BigM = 500.0.*inputs["pMax_Line_Reinforcement"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs

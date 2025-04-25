@@ -104,7 +104,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # create variable for fuel consumption for output
     # for resources that only use a single fuel
     @variable(EP, vFuel[y in SINGLE_FUEL, t = 1:T]>=0)
-    @variable(EP, vStartFuel[y in SINGLE_FUEL, t = 1:T]>=0)
+    @variable(EP, vStartFuel[y in SINGLE_FUEL, t = 1:T]==0)
 
     # for resources that use multi fuels
     # vMulFuels[y, f, t]: y - resource ID; f - fuel ID; t: time
