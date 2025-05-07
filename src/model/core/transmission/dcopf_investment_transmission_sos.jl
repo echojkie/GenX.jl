@@ -25,7 +25,7 @@ The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is con
 \end{aligned}
 ```
 """
-function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
+function dcopf_investment_transmission_sos!(EP::Model, inputs::Dict, setup::Dict)
     println("DC-OPF Based Investment Transmission Module")
 
     L = inputs["L"]     # Number of transmission lines
@@ -36,6 +36,13 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
+	    REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
+    	MAX_TRAN_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
+	    EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
+        for l in EXPANSION_LINES
+            EXPANSION_LEVELS[l] = (0:1:MAX_TRAN_EXPANSION_LIMIT[l]) #-Might not need multiplication of this part -->* REINFORCEMENT_CAP_SIZE[l]
+        end
+        inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
     end
     println("Network Expansion Lines: ", EXPANSION_LINES) 
     ### Check for valid inputs ###
@@ -48,7 +55,8 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
-        @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in EXPANSION_LINES, i in 1:inputs["Max_Trans_Cap"][l]], Bin)
+        @variable(EP, 0<=vZ_SOS1_VAR[l in EXPANSION_LINES, i in 1:(1+inputs["Max_Trans_Cap"][l])]<=1) #SOS1 variable
+	    @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in EXPANSION_LINES], Int, lower_bound = 0)
     end
 
     ### Expressions ###
@@ -64,7 +72,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP, eAvail_Trans_Cap[l = 1:L],
             if l in EXPANSION_LINES
-                eTransMax[l] + sum(vNEW_TRANS_CAP_DECISION_INT[l,i] for i in 1:inputs["Max_Trans_Cap"][l])*inputs["Line_Reinforcement_Cap_Size"][l]
+                eTransMax[l] + vNEW_TRANS_CAP_DECISION_INT[l]*inputs["Line_Reinforcement_Cap_Size"][l]
             else
                 eTransMax[l]
             end)
@@ -77,7 +85,7 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP,
             eTotalCNetworkExp,
-            sum(sum(vNEW_TRANS_CAP_DECISION_INT[l,i] for i in 1:inputs["Max_Trans_Cap"][l]) * inputs["Line_Reinforcement_Cap_Size"][l]* inputs["pC_Line_Reinforcement"][l] 
+            sum(vNEW_TRANS_CAP_DECISION_INT[l] * inputs["pC_Line_Reinforcement"][l] * inputs["Line_Reinforcement_Cap_Size"][l]
             for l in EXPANSION_LINES))
 
         if MultiStage == 1
@@ -101,6 +109,9 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     # If network expansion is used:
     if NetworkExpansion == 1
+        @constraint(EP, cZ_SOS1_VAR[l in EXPANSION_LINES], vZ_SOS1_VAR[l,:] in SOS1())
+        @constraint(EP, cZ_SOS1_VAR_SUM_COND[l in EXPANSION_LINES], sum(vZ_SOS1_VAR[l,i] for i in 1:(1+inputs["Max_Trans_Cap"][l])) == 1)
+	    @constraint(EP, cNEW_TRANS_CAP_DECISION[l in EXPANSION_LINES], vNEW_TRANS_CAP_DECISION_INT[l] == sum(vZ_SOS1_VAR[l,i].*EXPANSION_LEVELS[l][i] for i in 1:(1+inputs["Max_Trans_Cap"][l])))
         # Transmission network related power flow and capacity constraints
         if MultiStage == 1
             # Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
@@ -109,9 +120,9 @@ function dcopf_investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
                 eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
         end
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
-        #=@constraint(EP,
+        @constraint(EP,
             cMaxLineReinforcement[l in EXPANSION_LINES],
-            vNEW_TRANS_CAP_DECISION_INT[l]<=inputs["Max_Trans_Cap"][l])=#
+            vNEW_TRANS_CAP_DECISION_INT[l]<=inputs["Max_Trans_Cap"][l])
     end
     #END network expansion contraints
 

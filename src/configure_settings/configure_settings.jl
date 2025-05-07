@@ -30,6 +30,7 @@ function default_settings()
         "HourlyMatching" => 0,
         "HydrogenHourlyMatching" => 0,
         "DC_OPF" => 0,
+        "SOS1" => 1,
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "StorageVirtualDischarge" => 1,

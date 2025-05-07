@@ -89,7 +89,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     println("Demand (load) data Successfully Read!")
 
-    println("Demand data:", inputs["pD"])
+    #println("Demand data:", inputs["pD"])
 end
 
 # ensure that the length of demand data exactly matches
