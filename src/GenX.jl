@@ -45,7 +45,7 @@ using PrecompileTools: @compile_workload
 # To translate MW to GW, divide by ModelScalingFactor
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
-const ModelScalingFactor = 1e+3
+const ModelScalingFactor = 1e+2
 
 """
 An abstract type that should be subtyped for users creating GenX resources.

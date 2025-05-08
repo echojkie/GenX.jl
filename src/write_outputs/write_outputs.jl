@@ -61,7 +61,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         optimize!(EP)
     end
 
-    if output_settings_d["WriteCosts"]
+    #=if output_settings_d["WriteCosts"]
         elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
         println("Time elapsed for writing costs is")
         println(elapsed_time_costs)
@@ -71,7 +71,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_capacity = @elapsed dfCap = write_capacity(path, inputs, setup, EP)
         println("Time elapsed for writing capacity is")
         println(elapsed_time_capacity)
-    end
+    end=#
 
     if output_settings_d["WritePower"] || output_settings_d["WriteNetRevenue"]
         elapsed_time_power = @elapsed dfPower = write_power(path, inputs, setup, EP)
@@ -79,7 +79,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_power)
     end
 
-    if output_settings_d["WriteCharge"]
+    #=if output_settings_d["WriteCharge"]
         elapsed_time_charge = @elapsed write_charge(path, inputs, setup, EP)
         println("Time elapsed for writing charge is")
         println(elapsed_time_charge)
@@ -107,6 +107,29 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_nse = @elapsed write_nse(path, inputs, setup, EP)
         println("Time elapsed for writing nse is")
         println(elapsed_time_nse)
+    end=#
+
+    if inputs["Z"] > 1
+        if setup["NetworkExpansion"] == 1 && output_settings_d["WriteNWExpansion"]
+            elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)
+            println("Time elapsed for writing network expansion is")
+            println(elapsed_time_expansion)
+        end
+        
+        if output_settings_d["WriteTransmissionFlows"]
+            elapsed_time_flows = @elapsed write_transmission_flows(path, inputs, setup, EP)
+            println("Time elapsed for writing transmission flows is")
+            println(elapsed_time_flows)
+        end
+
+        #=if output_settings_d["WriteTransmissionLosses"]
+            elapsed_time_losses = @elapsed write_transmission_losses(path,
+                inputs,
+                setup,
+                EP)
+            println("Time elapsed for writing transmission losses is")
+            println(elapsed_time_losses)
+        end=#
     end
 
     if output_settings_d["WritePowerBalance"]
@@ -115,30 +138,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_power_balance)
     end
 
-    if inputs["Z"] > 1
-        if output_settings_d["WriteTransmissionFlows"]
-            elapsed_time_flows = @elapsed write_transmission_flows(path, inputs, setup, EP)
-            println("Time elapsed for writing transmission flows is")
-            println(elapsed_time_flows)
-        end
-
-        if output_settings_d["WriteTransmissionLosses"]
-            elapsed_time_losses = @elapsed write_transmission_losses(path,
-                inputs,
-                setup,
-                EP)
-            println("Time elapsed for writing transmission losses is")
-            println(elapsed_time_losses)
-        end
-
-        if setup["NetworkExpansion"] == 1 && output_settings_d["WriteNWExpansion"]
-            elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)
-            println("Time elapsed for writing network expansion is")
-            println(elapsed_time_expansion)
-        end
-    end
-
-    if output_settings_d["WriteEmissions"]
+    #=if output_settings_d["WriteEmissions"]
         elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP)
         println("Time elapsed for writing emissions is")
         println(elapsed_time_emissions)
@@ -256,7 +256,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
     if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
         write_maintenance(path, inputs, setup, EP)
-    end
+    end=#
 
     #Write angles when DC_OPF is activated
     if setup["DC_OPF"] == 1 && output_settings_d["WriteAngles"]
@@ -266,7 +266,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     # Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
-    if setup["MultiStage"] == 0
+    #=if setup["MultiStage"] == 0
         dfEnergyRevenue = DataFrame()
         dfChargingcost = DataFrame()
         dfSubRevenue = DataFrame()
@@ -477,7 +477,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println("Time elapsed for writing net revenue is")
             println(elapsed_time_net_rev)
         end
-    end
+    end=#
     ## Print confirmation
     println("Wrote outputs to $path")
 

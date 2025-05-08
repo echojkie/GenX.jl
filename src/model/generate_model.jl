@@ -122,7 +122,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Infrastructure
     discharge!(EP, inputs, setup)
 
-    non_served_energy!(EP, inputs, setup)
+    #non_served_energy!(EP, inputs, setup)
 
     investment_discharge!(EP, inputs, setup)
 
@@ -138,13 +138,21 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         operational_reserves!(EP, inputs, setup)
     end
 
-    if Z > 1
+    if Z > 1 && setup["DC_OPF"] == 0
         investment_transmission!(EP, inputs, setup)
         transmission!(EP, inputs, setup)
     end
 
-    if Z > 1 && setup["DC_OPF"] != 0
-        dcopf_transmission!(EP, inputs, setup)
+    if Z > 1 && setup["DC_OPF"] == 1
+        if setup["SOS1"] == 1
+            # SOS1 DCOPF investment transmission
+            dcopf_investment_transmission_sos!(EP, inputs, setup)
+            dcopf_transmission_sos!(EP, inputs, setup)
+        else
+            # DCOPF investment transmission
+            dcopf_investment_transmission!(EP, inputs, setup)  
+            dcopf_transmission!(EP, inputs, setup)
+        end
     end
 
     # Technologies
